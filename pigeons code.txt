@@ -1,0 +1,81 @@
+//setting up servo stuff
+#include <Servo.h>
+Servo leftServo;
+Servo rightServo;
+
+//setting up IR sensors
+#define lir_pin A0
+#define fir_pin A2   
+
+//allowable threshold for distance
+int const l_thresh_low = 4 , f_thresh_low = 4; //left and front threshhold respectively
+int const l_thresh_upper = 20, f_thresh_upper = 30 ; 
+
+//pin values
+int const lm_pin = 10, rm_pin = 9; //left and front motor pins
+
+//green right
+//red left 
+
+void setup() {
+  leftServo.attach (lm_pin); //left motor
+  rightServo.attach (rm_pin); //right motor
+  Serial.begin(9600);
+}
+
+void loop() {
+//converting IR input to distance in cm
+float lir_volt = analogRead(lir_pin)*0.0048828125 , fir_volt =  analogRead(fir_pin)*0.0048828125 ; //left and front ir sensor values
+int dist_lir = 13*pow(lir_volt,-1), dist_fir = 13*pow(fir_volt,-1);
+/*
+Serial.print("left ir: ");
+Serial.print(dist_lir);
+Serial.print("front ir: ");
+Serial.print(dist_fir);
+Serial.print("\n");
+delay (250);*/
+
+//case 1: front senses something but left doesn't
+if (dist_lir < l_thresh_upper && dist_lir > l_thresh_low && dist_fir > f_thresh_low){
+  //speed of servo goes from 0 to 180, 0 and 180 being max speeds in diff directions, 90 = standstill
+  //turn left
+  Serial.print("case 1\n");
+  leftServo.attach (lm_pin); //left motor
+  rightServo.attach (rm_pin); //right motor
+  delay(500);
+  leftServo.write(180); 
+  rightServo.write(0);
+}
+//case 2: front senses something and left senses something
+else if (dist_lir < l_thresh_upper && dist_fir < f_thresh_upper ){
+  //turn right
+  Serial.print("case 2\n");
+  leftServo.attach (lm_pin); //left motor
+  rightServo.attach (rm_pin); //right motor
+  delay(500);
+  leftServo.write(180); 
+  rightServo.write(135); 
+}
+//case 3: front doesn't sense anything and left senses something
+else if (dist_lir > l_thresh_upper && dist_fir < f_thresh_upper){
+  //go straight
+  leftServo.attach (lm_pin); //left motor
+  rightServo.attach (rm_pin); //right motor
+  delay(500);
+  leftServo.write(45); 
+  rightServo.write(0); 
+  
+  Serial.print("case 3\n");
+}
+//case 4: front and left doesn't 
+else if (dist_lir > l_thresh_upper && dist_fir > f_thresh_upper){
+  //stop
+  Serial.print ("case 4\n");
+  leftServo.write(180); 
+  rightServo.write(0);  
+  delay (500);
+  //leftServo.detach();
+  //rightServo.detach();
+}
+   
+  }
